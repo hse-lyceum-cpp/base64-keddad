@@ -6,5 +6,6 @@
 using namespace std;
 
 int main(){
-    cout << encode("f");
+    cout << Base64::decode("c3RyaW5n") << "\n";
+    cout << Base64::encode("string");
 }

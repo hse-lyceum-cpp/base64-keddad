@@ -1,11 +1,17 @@
 #include <string>
-using namespace std;
 
 #ifndef BASE64_KEDDAD_BASE64_H
 #define BASE64_KEDDAD_BASE64_H
 
-string encode(string raw_string);
+class Base64{
+public:
+    static std::string encode(const std::string &input);
+    static std::string decode(const std::string &input);
 
-string decode(string encoded_string);
+private:
+    static void encode_chunk(char *chunk);
+    static void decode_chunk(char *chunk);
+    static void nullify_chunk(char *chunk);
+};
 
 #endif //BASE64_KEDDAD_BASE64_H
