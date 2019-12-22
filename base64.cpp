@@ -13,8 +13,35 @@ namespace Base64 {
             39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 0, 0, 0, 0
     };
 
+    void encode_chunk(char *chunk) {
+        chunk[3] = chunk[2] ? chunk[2] & 0b00111111 : 64;
+        chunk[2] = chunk[1] ? ((chunk[2] & 0b11000000) >> 6) | ((chunk[1] & 0b00001111) << 2) : 64;
+        chunk[1] = ((chunk[1] & 0b11110000) >> 4) | ((chunk[0] & 0b00000011) << 4); //wtf i just copied it
+        chunk[0] = ((chunk[0] & 0b11111100) >> 2);
+        for (int i = 0; i < 4; i++) {
+            chunk[i] = b64dict[chunk[i]];
+        }
+    }
+
+    void decode_chunk(char *chunk) {
+        for (int i = 0; i < 4; i++) {
+            chunk[i] = b64revdict[chunk[i]];
+        }
+        chunk[0] = ((chunk[0] << 2) & 0b11111100) | ((chunk[1] >> 4) & 0b00000011);
+        chunk[1] = ((chunk[1] << 4) & 0b11110000) | ((chunk[2] >> 2) & 0b00001111); //wtf i just copied it
+        chunk[2] = ((chunk[2] << 6) & 0b11000000) | ((chunk[3] >> 0) & 0b00111111);
+        chunk[3] = 0;
+    }
+
+    void nullify_chunk(char *chunk) { // probably should be more convenient way to do it
+        chunk[0] = 0;
+        chunk[1] = 0;
+        chunk[2] = 0;
+        chunk[3] = 0;
+    }
+
     std::string encode(const std::string &input) {
-        auto *bytes = (uint8_t *) input.c_str();
+        auto *bytes = reinterpret_cast<const uint8_t *>(input.c_str());
         int length = input.size();
         std::string out;
         int pos = 0;
@@ -63,30 +90,4 @@ namespace Base64 {
     }
 
 
-    void encode_chunk(char *chunk) {
-        chunk[3] = chunk[2] ? chunk[2] & 0b00111111 : 64;
-        chunk[2] = chunk[1] ? ((chunk[2] & 0b11000000) >> 6) | ((chunk[1] & 0b00001111) << 2) : 64;
-        chunk[1] = ((chunk[1] & 0b11110000) >> 4) | ((chunk[0] & 0b00000011) << 4); //wtf i just copied it
-        chunk[0] = ((chunk[0] & 0b11111100) >> 2);
-        for (int i = 0; i < 4; i++) {
-            chunk[i] = b64dict[chunk[i]];
-        }
-    }
-
-    void decode_chunk(char *chunk) {
-        for (int i = 0; i < 4; i++) {
-            chunk[i] = b64revdict[chunk[i]];
-        }
-        chunk[0] = ((chunk[0] << 2) & 0b11111100) | ((chunk[1] >> 4) & 0b00000011);
-        chunk[1] = ((chunk[1] << 4) & 0b11110000) | ((chunk[2] >> 2) & 0b00001111); //wtf i just copied it
-        chunk[2] = ((chunk[2] << 6) & 0b11000000) | ((chunk[3] >> 0) & 0b00111111);
-        chunk[3] = 0;
-    }
-
-    void nullify_chunk(char *chunk) { // probably should be more convenient way to do it
-        chunk[0] = 0;
-        chunk[1] = 0;
-        chunk[2] = 0;
-        chunk[3] = 0;
-    }
 }
