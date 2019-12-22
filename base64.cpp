@@ -13,6 +13,14 @@ namespace Base64 {
             39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 0, 0, 0, 0
     };
 
+    int get_encoded_string_len(int bytes_size) {
+        while (bytes_size % 24 != 0) {
+            bytes_size += sizeof(char);
+        }
+
+        return (int) (bytes_size / sizeof(char));
+    }
+
     void encode_chunk(char *chunk) {
         chunk[3] = chunk[2] ? chunk[2] & 0b00111111 : 64;
         chunk[2] = chunk[1] ? ((chunk[2] & 0b11000000) >> 6) | ((chunk[1] & 0b00001111) << 2) : 64;
@@ -40,24 +48,31 @@ namespace Base64 {
         chunk[3] = 0;
     }
 
+    void fill_string(std::string &st, char *fr, const char *chunk, int size) {
+        for (int i = 0; i < size; ++i) {
+            *(fr + (i * sizeof(char))) = chunk[i];
+        }
+    }
+
     std::string encode(const std::string &input) {
         auto *bytes = reinterpret_cast<const uint8_t *>(input.c_str());
         int length = input.size();
-        std::string out;
+        std::string out('x',
+                        get_encoded_string_len(((int) sizeof(*bytes)) * length)); // NOLINT(bugprone-string-constructor)
         int pos = 0;
         char chunk[4]; // why 4 bytes if we should probably take blocks of 24 bits, 3 bytes, as in decode?
 
         while (pos < length) {
-            int chunk_size = 0;
 
             nullify_chunk(chunk);
 
-            for (chunk_size = 0; chunk_size < 3 && pos < length; chunk_size++, pos++) {
-                chunk[chunk_size] = bytes[pos];
+            for (int chunk_size = 0; chunk_size < 3 && pos < length; ++chunk_size, ++pos) {
+                chunk[chunk_size] = (char) bytes[pos];
             }
 
             encode_chunk(chunk);
-            out.append(chunk, 4); // don't really get this buffer append idea
+
+            fill_string(out, &out[pos], chunk, 4);
 
         }
 
@@ -88,6 +103,5 @@ namespace Base64 {
         }
         return out;
     }
-
 
 }
